@@ -26,11 +26,15 @@ def open_stop():
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
+                pygame.quit
                 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 running = 0
+                print("hiii")
+                return 0
 
-    pygame.quit
+    
+    
 
 
 open_start()
@@ -65,7 +69,10 @@ while running:
         if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                    open_start()
+                    if open_start() == 0:
+                        print("hi")
+                    else:
+                        pygame.quit()
 
     keys = pygame.key.get_pressed()
 
@@ -113,19 +120,19 @@ while running:
         char = pygame.transform.rotate(char, abs(360 - rotation + 270))
         rotation = 270
 
-    """if count == 0:
+    if count == 0:
         char = pygame.image.load("pictures/1.png")
-    elif count == 1:
+    elif count == 25:
         char = pygame.image.load("pictures/2.png")
-    elif count == 2:
+    elif count == 50:
         char = pygame.image.load("pictures/1.png")
-    elif count == 3:
+    elif count == 100:
         char = pygame.image.load("pictures/3.png")
 
-    if count < 4:
+    if count < 151:
         count += 1
     else:
-        count = 0"""
+        count = 0
 
     floor_rect.center = floor_cordx, floor_cordy
     player_rect.center = player_cordx, player_cordy
