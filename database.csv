@@ -1,0 +1,13 @@
+﻿buttons;pygame.K_RIGHT;pygame.K_LEFT;pygame.K_UP;pygame.K_DOWN;pygame.K_w;pygame.K_d;pygame.K_s;pygame.K_a
+buttons_joystick;R;L;U;D;;;;
+speed;5;;;;;;;
+w;900;;;;;;;
+h;700;;;;;;;
+floor;pictues/map.png;;;;;;;
+char;pictures/char.png;;;;;;;
+first_window;pictures/first_window1.png;pictures/first_window2.png;pictures/first_window3.png;pictures/first_window4.png;pictures/first_window5.png;;;
+footsteps;Sound/footsteps.mp3;;;;;;;
+cha_ching;Sound/cha_ching.mp3;;;;;;;
+police;Sound/police_sirene.mp3;;;;;;;
+shot;Sound/shot.mp3;;;;;;;
+car;Sound/car.mp3;;;;;;;

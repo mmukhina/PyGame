@@ -1,6 +1,6 @@
 #define LED 8
 
-const int buttonPin1 = 2;     
+const int buttonPin1 = 6;     
 const int buttonPin2 = 3;
 const int buttonPin3 = 4;
 const int buttonPin4 = 5;
@@ -70,6 +70,7 @@ void loop() {
   }
     
   Serial.print(data);
+  Serial.print("\n");
   data = "";
 }
 
