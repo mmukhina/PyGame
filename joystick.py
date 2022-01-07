@@ -14,7 +14,7 @@ def findArduinoUnoPort():
 def connect_btn():
     unoPort = findArduinoUnoPort()
 
-     if unoPort:
+    if unoPort:
         try:
             arduino = serial.Serial(port='COM5', baudrate=9600,timeout=0.1)
             print("Success")
@@ -37,6 +37,7 @@ if arduino:
     
 while True:
     try:
+        
         a = arduino.readline()
         print(a)
     except Exception:

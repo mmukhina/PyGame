@@ -1,7 +1,8 @@
-import csv
-with open('database.csv', encoding="utf8") as csvfile:
-    reader = csv.reader(csvfile, delimiter=';', quotechar='"')
-    for index, row in enumerate(reader):
-        if index > 10:
-            break
-        print(row)
+import sqlite3
+
+con = sqlite3.connect("database.db")
+cur = con.cursor()
+result = cur.execute("""SELECT * FROM constants""").fetchall()
+for i in result:
+    print(i)
+con.close()

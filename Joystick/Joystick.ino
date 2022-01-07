@@ -17,6 +17,7 @@ int buttonState4 = 0;
 
 char character;
 String data = "";
+String prev_data = "5N";
 
 void setup() {
   Serial.begin(9600);
@@ -68,9 +69,13 @@ void loop() {
   } else{
     data += 'N';
   }
-    
-  Serial.print(data);
-  Serial.print("\n");
+
+  if (prev_data != data){
+    Serial.print(data);
+    Serial.print("\n");
+    prev_data = data;
+  }
+  
   data = "";
 }
 
