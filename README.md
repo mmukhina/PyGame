@@ -11,7 +11,7 @@
 - Time
 - Random
 - Serial
-- CSV
+- Sqlite3
 
 ## Подключение
 <img align="right"  src="https://user-images.githubusercontent.com/73754515/148300707-2744ab63-a4bf-4a8a-ac25-29ea265db1a5.png">
