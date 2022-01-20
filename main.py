@@ -1,3 +1,4 @@
+
 import pygame
 from pygame.locals import *
 import pyautogui
@@ -37,10 +38,10 @@ class Shooting_bullet(pygame.sprite.Sprite):
 
     def __init__(self, x, y, direction, *group):
         super().__init__(*group)
-        radius = 7
+        radius = 4
         self.image = pygame.Surface((2 * radius, 2 * radius),pygame.SRCALPHA, 32)
         
-        pygame.draw.circle(self.image, pygame.Color("black"), (radius, radius), radius)
+        pygame.draw.circle(self.image, pygame.Color("grey"), (radius, radius), radius)
         
         self.rect = pygame.Rect(x, y, 2 * radius, 2 * radius)
         self.rect.x = x 
@@ -48,21 +49,29 @@ class Shooting_bullet(pygame.sprite.Sprite):
         self.direction = direction
         self.count = 0
 
-    def update(self, x, y, spider):
+    def update(self, move):
         
-        if self.direction == 0:
-            self.rect = self.rect.move(0, - 10)
-        elif self.direction == 180:
-            self.rect = self.rect.move(0, 10)
-        elif self.direction == 270:
-            self.rect = self.rect.move(10, 0)
-        elif self.direction == 90:
-            self.rect = self.rect.move(-10, 0)
+        if self.direction in ["down", "down stop"]:
+            self.rect = self.rect.move(0, 5)
+        elif self.direction in ["up", "up stop"]:
+            self.rect = self.rect.move(0, -5)
+        elif self.direction in ["left", "left stop"]:
+            self.rect = self.rect.move(-5, 0)
+        elif self.direction in ["right", "right stop"]:
+            self.rect = self.rect.move(5, 0)
 
-        self.rect = self.rect.move(x, y)
+        if move == "down":
+            self.rect = self.rect.move(0, -1.5)
+        elif move == "up":
+            self.rect = self.rect.move(0, 1.5)
+        elif move == "left":
+            self.rect = self.rect.move(1.5, 0)
+        elif move == "right":
+            self.rect = self.rect.move(-1.5, 0)
+
         self.count += 1
 
-        if self.count == 50:
+        if self.count == 60:
             self.kill()
          
 
@@ -76,19 +85,47 @@ class Bullet(pygame.sprite.Sprite):
         super().__init__(*group)
         self.image = Bullet.image
         self.rect = self.image.get_rect()
-        self.rect.x = random.randint(-2500, 4300)
-        self.rect.y = random.randint(-2300, 3300)
+        self.rect.x = random.randint(-5700, 7600)
+        self.rect.y = random.randint(-4500, 5700)
 
-    def update(self, x, y,horizontal_borders, vertical_borders, e):
+    def update(self, direction, pick, player):
 
-        if (pygame.sprite.spritecollideany(self, horizontal_borders) or pygame.sprite.spritecollideany(self, vertical_borders)) and e == 1:
-            self.rect.x = random.randint(-2500, 4300)
-            self.rect.y = random.randint(-2300, 3300)
-            a = 1
-        else:
-            a = 0
+        if (pygame.sprite.spritecollideany(self, player) and pick == 1):
+            self.rect.x = random.randint(950, 1000)
+            self.rect.y = random.randint(950, 1000)
+            #self.rect.x = random.randint(-2500, 4300)
+            #self.rect.y = random.randint(-2300, 3300)
 
-        self.rect = self.rect.move(x, y)
+        if direction == "down":
+            self.rect = self.rect.move(0, -1.5)
+        elif direction == "up":
+            self.rect = self.rect.move(0, 1.5)
+        elif direction == "left":
+            self.rect = self.rect.move(1.5, 0)
+        elif direction == "right":
+            self.rect = self.rect.move(-1.5, 0)
+
+
+
+class Map(pygame.sprite.Sprite):
+    def __init__(self, img, width, height, *group):
+        super().__init__(*group)
+        self.image = img
+
+        self.rect = self.image.get_rect()
+        self.rect.x = (width // 2) - (self.image.get_width() // 2)
+        self.rect.y = (height // 2) - (self.image.get_height() // 2)
+
+    def update(self, direction):
+        if direction == "down":
+            self.rect = self.rect.move(0, -1.5)
+        elif direction == "up":
+            self.rect = self.rect.move(0, 1.5)
+        elif direction == "left":
+            self.rect = self.rect.move(1.5, 0)
+        elif direction == "right":
+            self.rect = self.rect.move(-1.5, 0)
+        
 
 
 
@@ -175,65 +212,107 @@ class Game():
         self.floor_cordx = self.width // 2
         self.floor_cordy = self.height // 2
 
-        self.floor_rect = self.floor.get_rect()
-        self.floor_rect.center = self.floor_cordx, self.floor_cordy
-        self.screen.blit(self.floor, self.floor_rect)
+        Map(self.floor, self.width, self.height, self.map_group)
 
         Player(self.width, self.height, self.player_down, self.player_left, self.player_right, self.player_up, self.player_group)
-        
+
+        for i in range(10):
+            Bullet(self.bullets_group)
         
         pygame.display.update()
 
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
 
         while self.main_game_running:
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    self.running = False
+            
+            if self.joystick != 1:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        self.running = False
+                        break
+
+                    
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            pygame.quit()
+                            self.stage = 3
+                            return
+                        
+                        if event.key == pygame.K_e:
+                            self.pick = 1
+
+                        if event.key == pygame.K_SPACE and self.no_bullet > 0:
+                            self.no_bullet -= 1
+                            Shooting_bullet((self.width // 2), (self.height // 2), self.direction,  self.shooting_bullet_group)
+
+                        if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                            self.direction = "down"
+                        elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                            self.direction = "up"
+                        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                            self.direction = "left"
+                        elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                            self.direction = "right"
+
+                    if event.type == pygame.KEYUP:
+                        if (event.key == pygame.K_DOWN or event.key == pygame.K_s)  and self.direction == "down":
+                            self.direction = "down stop"
+                        elif (event.key == pygame.K_UP or event.key == pygame.K_w)  and self.direction == "up":
+                            self.direction = "up stop"
+                        elif (event.key == pygame.K_LEFT or event.key == pygame.K_a)  and self.direction == "left":
+                            self.direction = "left stop"
+                        elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d)  and self.direction == "right":
+                            self.direction = "right stop"
+
+                        if event.key == pygame.K_e:
+                            self.pick = 0
+
+                if self.direction == "down":
+                    self.floor_cordy -= self.speed
+                elif self.direction == "up":
+                    self.floor_cordy += self.speed
+                elif self.direction == "left":
+                    self.floor_cordx += self.speed
+                elif self.direction == "right":
+                    self.floor_cordx -= self.speed
+
+                self.update()
+                
+
+            else:
+                self.joystick_movement()
+
+                if self.joy_move in [b'1D\n', b'1U\n', b'1L\n', b'1R\n', b'1N\n']:
+                    pygame.quit()
+                    self.stage = 3
                     break
 
+
+    def joystick_movement(self):
+        try:
+            data = self.arduino.readline()
+        except Exception:
+            data = b'1N\n'
+            self.arduino.close()
+            
+        if data != b'' and data != b'5N\n':
+            self.joy_move = data
+            #self.sound[0].play(-1)
+            #self.walking_sound = 0
+        elif data != b'':
+            self.joy_move = data
+            #self.sound[0].stop()
+            #self.walking_sound = 1
+            
                 
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        self.stage = 3
-                        return
-
-                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        self.direction = "down"
-                    elif event.key == pygame.K_UP or event.key == pygame.K_w:
-                        self.direction = "up"
-                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        self.direction = "left"
-                    elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        self.direction = "right"
-
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        self.direction = "down stop"
-                    elif event.key == pygame.K_UP or event.key == pygame.K_w:
-                        self.direction = "up stop"
-                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        self.direction = "left stop"
-                    elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        self.direction = "right stop"
-
-            if self.direction == "down":
-                self.floor_cordy -= self.speed
-            elif self.direction == "up":
-                self.floor_cordy += self.speed
-            elif self.direction == "left":
-                self.floor_cordx += self.speed
-            elif self.direction == "right":
-                self.floor_cordx -= self.speed
-                
-
-            self.update()
 
     def update(self):
         self.screen.fill((0,0,0))
-        self.floor_rect.center = self.floor_cordx, self.floor_cordy
-        self.screen.blit(self.floor, self.floor_rect)
+        #self.floor_rect.center = self.floor_cordx, self.floor_cordy
+        #self.screen.blit(self.floor, self.floor_rect)
+
+        self.map_group.draw(self.screen)
+        self.map_group.update(self.direction)
 
         s = pygame.Surface((self.width, 50))
         s.set_alpha(128)                
@@ -261,8 +340,16 @@ class Game():
         self.player_group.draw(self.screen)
         self.player_group.update(self.direction)
 
-        self.border_group.draw(self.screen)
-        #self.player_group.update(self.direction)
+        pick_up = pygame.sprite.groupcollide(self.player_group, self.bullets_group, False, False)
+        if pick_up != {} and self.pick == 1:
+            self.no_bullet += (len(pick_up[list(pick_up.keys())[0]]) * 5)
+
+
+        self.bullets_group.draw(self.screen)
+        self.bullets_group.update(self.direction, self.pick, self.player_group)
+
+        self.shooting_bullet_group.draw(self.screen)
+        self.shooting_bullet_group.update(self.direction)
         
         pygame.display.update()
         #self.clock.tick(50)
@@ -275,7 +362,6 @@ class Game():
         self.heart = pygame.image.load("pictures/heart.png")
         self.bullet = pygame.image.load("pictures/bullet.png")
         self.monster = pygame.image.load("pictures/monster.png")
-        self.floor = pygame.image.load('pictures/map7.jpg')
 
         self.keys = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_UP, pygame.K_DOWN, pygame.K_w, pygame.K_d, pygame.K_s, pygame.K_a]
 
@@ -285,6 +371,8 @@ class Game():
         self.health = 5
         self.no_bullet = 0
         self.no_killed = 0
+        self.pick = 0
+        self.shoot = 0
 
         # Sprite группы
         self.player_group = pygame.sprite.Group()
@@ -292,6 +380,7 @@ class Game():
         self.dino_group = pygame.sprite.Group()
         self.shooting_bullet_group = pygame.sprite.Group()
         self.border_group = pygame.sprite.Group()
+        self.map_group = pygame.sprite.Group()
 
         self.main_game_running = 1
 
