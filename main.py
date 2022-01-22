@@ -13,23 +13,103 @@ from pygame_functions import *
 
 
 class Dino(pygame.sprite.Sprite):
-
-    def __init__(self, *group):
+    def __init__(self, down, left, right, up, die, down_kill, up_kill, left_kill, right_kill, *group):
         super().__init__(*group)
-        self.image = Dino.image
+        self.dino_down, self.dino_left, self.dino_right = down, left, right
+        self.dino_up, self.dino_die, self.dino_down_kill = up, die, down_kill
+        self.dino_up_kill, self.dino_left_kill, self.dino_right_kill = up_kill, left_kill, right_kill
+
+        self.index = 0
+        self.get_killed = 0
+        self.attack = 0
+        self.direction = "dowm"
+        self.image = self.dino_down[self.index]
+ 
         self.rect = self.image.get_rect()
-        self.rect.x = random.randint(-2500, 4300)
-        self.rect.y = random.randint(-2300, 3300)
+        self.rect.x = random.randint(-5700, 7600)
+        self.rect.y = random.randint(-4500, 5700)
 
-    def update(self, x, y, bullet):
-        self.rect = self.rect.move(x, y)
 
-        if pygame.sprite.spritecollide(self, bullet, True):
-            self.kill()
-            a = 1
+    def update(self, move, x, y, health, bullet, player):
+        if move == "down":
+            self.rect = self.rect.move(0, -2)
+        elif move == "up":
+            self.rect = self.rect.move(0, 2)
+        elif move == "left":
+            self.rect = self.rect.move(2, 0)
+        elif move == "right":
+            self.rect = self.rect.move(-2, 0)
+
+        if health > 0:
+            if self.get_killed == 0:
+                if pygame.sprite.spritecollide(self, player, False):
+                    if self.direction == "left":
+                        if self.index >= len(self.dino_left_kill) * 10:
+                            self.index = 0
+                        self.image = self.dino_left_kill[self.index // 10]
+                    elif self.direction == "right":
+                        if self.index >= len(self.dino_right_kill) * 10:
+                            self.index = 0
+                        self.image = self.dino_right_kill[self.index // 10]
+                    elif self.direction == "up":
+                        if self.index >= len(self.dino_up_kill) * 10:
+                            self.index = 0
+                        self.image = self.dino_up_kill[self.index // 10]
+                    elif self.direction == "down":
+                        if self.index >= len(self.dino_down_kill) * 10:
+                            self.index = 0
+                        self.image = self.dino_down_kill[self.index // 10]
+
+                else:
+                    if self.rect.x > x:
+                        if self.index >= len(self.dino_left) * 10:
+                            self.index = 0
+                        self.image = self.dino_left[self.index // 10]
+                        self.rect = self.rect.move(-1, 0)
+                        self.direction = "left"
+                    
+                    elif self.rect.y > y:
+                        if self.index >= len(self.dino_up) * 10:
+                            self.index = 0
+                        self.image = self.dino_up[self.index // 10]
+                        self.rect = self.rect.move(0, -1)
+                        self.direction = "up"
+
+                    elif self.rect.x < x:
+                        if self.index >= len(self.dino_right) * 10:
+                            self.index = 0
+                        self.image = self.dino_right[self.index // 10]
+                        self.rect = self.rect.move(1, 0)
+                        self.direction = "right"
+
+                    elif self.rect.y < y:
+                        if self.index >= len(self.dino_down) * 10:
+                            self.index = 0
+                        self.image = self.dino_down[self.index // 10]
+                        self.rect = self.rect.move(0, 1)
+                        self.direction = "down"
+
+                    self.attack = 0
+
+                self.index += 1
+
+
+                if pygame.sprite.spritecollide(self, bullet, True):
+                    self.get_killed = 1
+                
+
+            
+            else:
+                if self.get_killed >= len(self.dino_die) * 15 + 25:
+                    self.kill()
+
+                elif self.get_killed < len(self.dino_die) * 15:
+                    self.image = self.dino_die[self.get_killed // 15]
+
+                self.get_killed += 1
+
         else:
-            a = 0
-
+            self.image = self.dino_down[0]
 
         
 
@@ -61,13 +141,13 @@ class Shooting_bullet(pygame.sprite.Sprite):
             self.rect = self.rect.move(5, 0)
 
         if move == "down":
-            self.rect = self.rect.move(0, -1.5)
+            self.rect = self.rect.move(0, -1)
         elif move == "up":
-            self.rect = self.rect.move(0, 1.5)
+            self.rect = self.rect.move(0, 1)
         elif move == "left":
-            self.rect = self.rect.move(1.5, 0)
+            self.rect = self.rect.move(1, 0)
         elif move == "right":
-            self.rect = self.rect.move(-1.5, 0)
+            self.rect = self.rect.move(-1, 0)
 
         self.count += 1
 
@@ -97,13 +177,14 @@ class Bullet(pygame.sprite.Sprite):
             #self.rect.y = random.randint(-2300, 3300)
 
         if direction == "down":
-            self.rect = self.rect.move(0, -1.5)
+            self.rect = self.rect.move(0, -2)
         elif direction == "up":
-            self.rect = self.rect.move(0, 1.5)
+            self.rect = self.rect.move(0, 2)
         elif direction == "left":
-            self.rect = self.rect.move(1.5, 0)
+            self.rect = self.rect.move(2, 0)
         elif direction == "right":
-            self.rect = self.rect.move(-1.5, 0)
+            self.rect = self.rect.move(-2, 0)
+
 
 
 
@@ -118,70 +199,77 @@ class Map(pygame.sprite.Sprite):
 
     def update(self, direction):
         if direction == "down":
-            self.rect = self.rect.move(0, -1.5)
+            self.rect = self.rect.move(0, -2)
         elif direction == "up":
-            self.rect = self.rect.move(0, 1.5)
+            self.rect = self.rect.move(0, 2)
         elif direction == "left":
-            self.rect = self.rect.move(1.5, 0)
+            self.rect = self.rect.move(2, 0)
         elif direction == "right":
-            self.rect = self.rect.move(-1.5, 0)
+            self.rect = self.rect.move(-2, 0)
         
 
 
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, width, height, down, left, right, up, *group):
+    def __init__(self, width, height, down, left, right, up, ghost, *group):
         super().__init__(*group)
         self.player_down = down
         self.player_up = up
         self.player_left = left
         self.player_right = right
+        self.ghost = ghost
         
         self.index = 0
+        self.count = 0
         self.image = self.player_down[self.index]
  
         self.rect = self.image.get_rect()
         self.rect.x = (width // 2) - 30
         self.rect.y = (height // 2) - 30
  
-    def update(self, direction):
-        if direction == "down":
-            if self.index >= len(self.player_down) * 10:
-                self.index = 0
-            self.image = self.player_down[self.index // 10]
-        
-        elif direction == "up":
-            if self.index >= len(self.player_up) * 10:
-                self.index = 0
-            self.image = self.player_up[self.index // 10]
-
-        elif direction == "left":
-            if self.index >= len(self.player_left) * 10:
-                self.index = 0
-            self.image = self.player_left[self.index // 10]
+    def update(self, health, direction):
+        if health > 0:
+            if direction == "down":
+                if self.index >= len(self.player_down) * 10:
+                    self.index = 0
+                self.image = self.player_down[self.index // 10]
             
+            elif direction == "up":
+                if self.index >= len(self.player_up) * 10:
+                    self.index = 0
+                self.image = self.player_up[self.index // 10]
 
-        elif direction == "right":
-            if self.index >= len(self.player_right) * 10:
-                self.index = 0
-            self.image = self.player_right[self.index // 10]
+            elif direction == "left":
+                if self.index >= len(self.player_left) * 10:
+                    self.index = 0
+                self.image = self.player_left[self.index // 10]
+                
 
-        elif direction == "down stop":
-            self.image = self.player_down[0]
+            elif direction == "right":
+                if self.index >= len(self.player_right) * 10:
+                    self.index = 0
+                self.image = self.player_right[self.index // 10]
 
-        elif direction == "left stop":
-            self.image = self.player_left[0]
+            elif direction == "down stop":
+                self.image = self.player_down[0]
 
-        elif direction == "right stop":
-            self.image = self.player_right[0]
+            elif direction == "left stop":
+                self.image = self.player_left[0]
 
-        elif direction == "up stop":
-            self.image = self.player_up[0]
+            elif direction == "right stop":
+                self.image = self.player_right[0]
 
-        self.index += 1
-            
+            elif direction == "up stop":
+                self.image = self.player_up[0]  
 
+            self.index += 1
+        else:
+            if self.count >= len(self.ghost) * 40:
+                self.count = 0
+            self.image = self.ghost[self.count // 40]
+            self.count += 1
+            self.rect = self.rect.move(0, -1)
         
 
     
@@ -214,78 +302,83 @@ class Game():
 
         Map(self.floor, self.width, self.height, self.map_group)
 
-        Player(self.width, self.height, self.player_down, self.player_left, self.player_right, self.player_up, self.player_group)
+        Player(self.width, self.height, self.player_down, self.player_left, self.player_right, self.player_up, self.player_ghost, self.player_group)
 
         for i in range(10):
             Bullet(self.bullets_group)
+
+
+        for i in range(10):
+            Dino(self.dino_down, self.dino_left, self.dino_right, self.dino_up, self.dino_die,
+                 self.dino_down_kill, self.dino_up_kill, self.dino_left_kill, self.dino_right_kill, self.dino_group)
         
         pygame.display.update()
 
-        #self.clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()
 
         while self.main_game_running:
-            
-            if self.joystick != 1:
-                for event in pygame.event.get():
-                    if event.type == QUIT:
-                        self.running = False
+            if self.health != 0:
+                if self.joystick != 1:
+                    for event in pygame.event.get():
+                        if event.type == QUIT:
+                            self.running = False
+                            break
+
+                        
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_ESCAPE:
+                                pygame.quit()
+                                self.stage = 3
+                                return
+                            
+                            if event.key == pygame.K_e:
+                                self.pick = 1
+
+                            if event.key == pygame.K_SPACE and self.no_bullet > 0:
+                                self.no_bullet -= 1
+                                Shooting_bullet((self.width // 2), (self.height // 2), self.direction,  self.shooting_bullet_group)
+
+                            if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                                self.direction = "down"
+                            elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                                self.direction = "up"
+                            elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                                self.direction = "left"
+                            elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                                self.direction = "right"
+
+                        if event.type == pygame.KEYUP:
+                            if (event.key == pygame.K_DOWN or event.key == pygame.K_s)  and self.direction == "down":
+                                self.direction = "down stop"
+                            elif (event.key == pygame.K_UP or event.key == pygame.K_w)  and self.direction == "up":
+                                self.direction = "up stop"
+                            elif (event.key == pygame.K_LEFT or event.key == pygame.K_a)  and self.direction == "left":
+                                self.direction = "left stop"
+                            elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d)  and self.direction == "right":
+                                self.direction = "right stop"
+
+                            if event.key == pygame.K_e:
+                                self.pick = 0
+
+
+                    self.update()
+
+                    if self.health == 0:
+                        print("end")
+                    
+
+                else:
+                    self.joystick_movement()
+
+                    if self.joy_move in [b'1D\n', b'1U\n', b'1L\n', b'1R\n', b'1N\n']:
+                        pygame.quit()
+                        self.stage = 3
                         break
 
-                    
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
-                            pygame.quit()
-                            self.stage = 3
-                            return
-                        
-                        if event.key == pygame.K_e:
-                            self.pick = 1
-
-                        if event.key == pygame.K_SPACE and self.no_bullet > 0:
-                            self.no_bullet -= 1
-                            Shooting_bullet((self.width // 2), (self.height // 2), self.direction,  self.shooting_bullet_group)
-
-                        if event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                            self.direction = "down"
-                        elif event.key == pygame.K_UP or event.key == pygame.K_w:
-                            self.direction = "up"
-                        elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                            self.direction = "left"
-                        elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                            self.direction = "right"
-
-                    if event.type == pygame.KEYUP:
-                        if (event.key == pygame.K_DOWN or event.key == pygame.K_s)  and self.direction == "down":
-                            self.direction = "down stop"
-                        elif (event.key == pygame.K_UP or event.key == pygame.K_w)  and self.direction == "up":
-                            self.direction = "up stop"
-                        elif (event.key == pygame.K_LEFT or event.key == pygame.K_a)  and self.direction == "left":
-                            self.direction = "left stop"
-                        elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d)  and self.direction == "right":
-                            self.direction = "right stop"
-
-                        if event.key == pygame.K_e:
-                            self.pick = 0
-
-                if self.direction == "down":
-                    self.floor_cordy -= self.speed
-                elif self.direction == "up":
-                    self.floor_cordy += self.speed
-                elif self.direction == "left":
-                    self.floor_cordx += self.speed
-                elif self.direction == "right":
-                    self.floor_cordx -= self.speed
-
-                self.update()
-                
-
             else:
-                self.joystick_movement()
-
-                if self.joy_move in [b'1D\n', b'1U\n', b'1L\n', b'1R\n', b'1N\n']:
-                    pygame.quit()
-                    self.stage = 3
-                    break
+                pygame.quit()
+                self.stage = 3
+                return
 
 
     def joystick_movement(self):
@@ -307,9 +400,55 @@ class Game():
                 
 
     def update(self):
+        self.text()
+
+        pick_up = pygame.sprite.groupcollide(self.player_group, self.bullets_group, False, False)
+        if pick_up != {} and self.pick == 1:
+            self.no_bullet += (len(pick_up[list(pick_up.keys())[0]]) * 5)
+
+
+        self.bullets_group.draw(self.screen)
+        self.bullets_group.update(self.direction, self.pick, self.player_group)
+
+        self.shooting_bullet_group.draw(self.screen)
+        self.shooting_bullet_group.update(self.direction)
+
+        shot = pygame.sprite.groupcollide(self.shooting_bullet_group, self.dino_group, False, False)
+        if shot != {}:
+            self.no_killed += (len(shot[list(shot.keys())[0]]))
+            for i in range(2):
+                Dino(self.dino_down, self.dino_left, self.dino_right, self.dino_up, self.dino_die,
+                     self.dino_down_kill, self.dino_up_kill, self.dino_left_kill, self.dino_right_kill, self.dino_group)
+
+
+        life = pygame.sprite.groupcollide(self.player_group, self.dino_group, False, False)
+        if life != {}:
+            self.hit_count += 1
+        if self.hit_count == 100:
+            self.health -= 1
+            self.hit_count = 0
+
+        self.dino_group.draw(self.screen)
+        self.dino_group.update(self.direction, self.width // 2 - 60, self.height // 2 - 60, self.health, self.shooting_bullet_group, self.player_group)
+
+        if self.health > 0:
+            self.player_group.draw(self.screen)
+            self.player_group.update(self.health, self.direction)
+            pygame.display.update()
+        else:
+            for i in range(300):
+                self.text()
+                self.dino_group.draw(self.screen)
+                self.dino_group.update(self.direction, self.width // 2 - 60, self.height // 2 - 60, self.health, self.shooting_bullet_group, self.player_group)
+                self.player_group.draw(self.screen)
+                self.player_group.update(self.health, self.direction)
+                pygame.display.update()
+        
+        
+        self.clock.tick(150)
+
+    def text(self):
         self.screen.fill((0,0,0))
-        #self.floor_rect.center = self.floor_cordx, self.floor_cordy
-        #self.screen.blit(self.floor, self.floor_rect)
 
         self.map_group.draw(self.screen)
         self.map_group.update(self.direction)
@@ -337,23 +476,6 @@ class Game():
         text = font1.render(temp, True , (0,0,0))
         self.screen.blit(text , (700, 10))
 
-        self.player_group.draw(self.screen)
-        self.player_group.update(self.direction)
-
-        pick_up = pygame.sprite.groupcollide(self.player_group, self.bullets_group, False, False)
-        if pick_up != {} and self.pick == 1:
-            self.no_bullet += (len(pick_up[list(pick_up.keys())[0]]) * 5)
-
-
-        self.bullets_group.draw(self.screen)
-        self.bullets_group.update(self.direction, self.pick, self.player_group)
-
-        self.shooting_bullet_group.draw(self.screen)
-        self.shooting_bullet_group.update(self.direction)
-        
-        pygame.display.update()
-        #self.clock.tick(50)
-
     def load(self):
 
         self.width, self.height = pyautogui.size()
@@ -366,13 +488,14 @@ class Game():
         self.keys = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_UP, pygame.K_DOWN, pygame.K_w, pygame.K_d, pygame.K_s, pygame.K_a]
 
         self.joy_move = b''
-        self.direction = "None"
+        self.direction = "down_stop"
 
         self.health = 5
-        self.no_bullet = 0
+        self.no_bullet = 10
         self.no_killed = 0
         self.pick = 0
         self.shoot = 0
+        self.hit_count = 0
 
         # Sprite группы
         self.player_group = pygame.sprite.Group()
@@ -399,6 +522,38 @@ class Game():
         result = cur.execute("""SELECT * FROM Lists WHERE key is "player_right" """).fetchall()
         self.player_right = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
 
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_left" """).fetchall()
+        self.dino_left = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_right" """).fetchall()
+        self.dino_right = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_up" """).fetchall()
+        self.dino_up = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_down" """).fetchall()
+        self.dino_down = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_die" """).fetchall()
+        self.dino_die = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "ghost" """).fetchall()
+        self.player_ghost = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_down_kill" """).fetchall()
+        self.dino_down_kill = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_up_kill" """).fetchall()
+        self.dino_up_kill = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_right_kill" """).fetchall()
+        self.dino_right_kill = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_left_kill" """).fetchall()
+        self.dino_left_kill = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
+        
+
+
         con.close()
 
         
@@ -421,6 +576,8 @@ class Game():
         mixer.music.load("Sound/background1.mp3")
         mixer.music.play(-1)
 
+        self.end_game = pygame.image.load("pictures/game_over.jpg")
+
         count = 0
 
         color_dark = (0,0,0)
@@ -432,103 +589,124 @@ class Game():
         text3 = font1.render('Подключить джойстик' , True , (26, 199, 73))
         text4 = font1.render('Подключить джойстик' , True , (237, 0, 0))
         text5 = font1.render('Меню' , True , (255, 255, 255))
+        text6 = font1.render('Счет: ' + str(self.no_killed), True , (255, 255, 255))
 
         pygame.display.update()
 
         while self.start_running:
-            if count % 1000 == 0:
-                self.screen_start.blit(self.pause_window[random.randint(0, 4)], [0, 0])
+            if self.health == 0:
+                self.screen_start.blit(self.end_game, [0, 0])
 
-            count += 1
+                self.screen_start.blit(text6 , (self.w * 0.57 + 115, self.h * 0.82 + 5))
 
-            if self.sound_state == 2:
-                self.screen_start.blit(self.sound_image1 , (10, 10))
-                mixer.music.play(-1)
-                self.sound_state = 1
-            elif self.sound_state == 0:
-                self.screen_start.blit(self.sound_image2 , (10, 10))
-                mixer.music.stop()
-            else:
-                self.screen_start.blit(self.sound_image1 , (10, 10))
-
-            mouse = pygame.mouse.get_pos()
-
-            # Кнопка 1
-            if self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.62 <= mouse[1] <= self.h * 0.62 + 50:
-                pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.62 ,300,50], border_radius = 10)
-                pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.62 ,300,50], 1, border_radius = 10)
-                  
-            else:
-                pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.62 ,300,50], border_radius = 10)
-                pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.62 ,300,50], 2, border_radius = 10)
-
-
-            # Кнопка 2
-            if self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.72 <= mouse[1] <= self.h * 0.7 + 50:
-                pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.72 ,300,50], border_radius = 10)
-                pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.72 ,300,50], 1, border_radius = 10)
-                  
-            else:
-                pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.72 ,300,50], border_radius = 10)
-                pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.72 ,300,50], 2, border_radius = 10)
-
-            self.screen_start.blit(text , (self.w * 0.57 + 54, self.h * 0.72 + 5))
-            
-            # Кнопка 3
-            if self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.82 <= mouse[1] <= self.h * 0.82 + 50:
-                pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.82 ,300,50], border_radius = 10)
-                pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.82 ,300,50], 1, border_radius = 10)
-                  
-            else:
-                pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.82 ,300,50], border_radius = 10)
-                pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.82 ,300,50], 2, border_radius = 10)
-                
-            self.screen_start.blit(text5 , (self.w * 0.57 + 115, self.h * 0.82 + 5))
-                
-
-            if self.joystick == 1:
-                self.screen_start.blit(text3 , (self.w * 0.57 + 21, self.h * 0.62 + 5))
-            elif self.joystick == 0:
-                self.screen_start.blit(text4 , (self.w * 0.57 + 21, self.h * 0.62 + 5))
-            else:
-                self.screen_start.blit(text2 , (self.w * 0.57 + 21, self.h * 0.62 + 5))
-                
-
-            pygame.display.update()
-            
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    self.stop = 1
-                    self.start_running = False
-                    pygame.quit()
-                    sys.exit()
-                    
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.w * 0.6 <= mouse[0] <= self.w * 0.6 + 180 and self.h * 0.72 <= mouse[1] <= self.h * 0.72 + 50:
-                        self.stage = 2
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        self.stop = 1
+                        self.start_running = False
                         pygame.quit()
+                        sys.exit()
 
-                    elif self.w * 0.6 <= mouse[0] <= self.w * 0.6 + 180 and self.h * 0.82 <= mouse[1] <= self.h * 0.82 + 50:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
                         self.stage = 1
                         pygame.quit()
                         return
 
-                    elif 10 <= mouse[0] <= 50 and 10 <= mouse[1] <= 50 and self.sound_state == 1:
-                        self.sound_state = 0
+                pygame.display.update()
 
-                    elif 10 <= mouse[0] <= 50 and 10 <= mouse[1] <= 50 and self.sound_state == 0:
-                        self.sound_state = 2
+            else:
+                if count % 1000 == 0:
+                    self.screen_start.blit(self.pause_window[random.randint(0, 4)], [0, 0])
 
-                    elif self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.62 <= mouse[1] <= self.h * 0.62 + 50:
-                        if self.joystick_connect() == 1:
-                            self.joystick = 1
-                            time.sleep(2)
-                            self.arduino.write(bytes("1", 'utf-8'))
-                            self.speed = 1.5
-                        else:
-                            self.joystick = 0
-                            pyautogui.alert("Джойстик не найден")
-                            self.speed = 1.5
+                count += 1
+
+                if self.sound_state == 2:
+                    self.screen_start.blit(self.sound_image1 , (10, 10))
+                    mixer.music.play(-1)
+                    self.sound_state = 1
+                elif self.sound_state == 0:
+                    self.screen_start.blit(self.sound_image2 , (10, 10))
+                    mixer.music.stop()
+                else:
+                    self.screen_start.blit(self.sound_image1 , (10, 10))
+
+                mouse = pygame.mouse.get_pos()
+
+                # Кнопка 1
+                if self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.62 <= mouse[1] <= self.h * 0.62 + 50:
+                    pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.62 ,300,50], border_radius = 10)
+                    pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.62 ,300,50], 1, border_radius = 10)
+                      
+                else:
+                    pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.62 ,300,50], border_radius = 10)
+                    pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.62 ,300,50], 2, border_radius = 10)
+
+
+                # Кнопка 2
+                if self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.72 <= mouse[1] <= self.h * 0.7 + 50:
+                    pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.72 ,300,50], border_radius = 10)
+                    pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.72 ,300,50], 1, border_radius = 10)
+                      
+                else:
+                    pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.72 ,300,50], border_radius = 10)
+                    pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.72 ,300,50], 2, border_radius = 10)
+
+                self.screen_start.blit(text , (self.w * 0.57 + 54, self.h * 0.72 + 5))
+                
+                # Кнопка 3
+                if self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.82 <= mouse[1] <= self.h * 0.82 + 50:
+                    pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.82 ,300,50], border_radius = 10)
+                    pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.82 ,300,50], 1, border_radius = 10)
+                      
+                else:
+                    pygame.draw.rect(self.screen_start, color_dark, [self.w * 0.57 ,self.h * 0.82 ,300,50], border_radius = 10)
+                    pygame.draw.rect(self.screen_start, (255, 255, 255), [self.w * 0.57 ,self.h * 0.82 ,300,50], 2, border_radius = 10)
+                    
+                self.screen_start.blit(text5 , (self.w * 0.57 + 115, self.h * 0.82 + 5))
+                    
+
+                if self.joystick == 1:
+                    self.screen_start.blit(text3 , (self.w * 0.57 + 21, self.h * 0.62 + 5))
+                elif self.joystick == 0:
+                    self.screen_start.blit(text4 , (self.w * 0.57 + 21, self.h * 0.62 + 5))
+                else:
+                    self.screen_start.blit(text2 , (self.w * 0.57 + 21, self.h * 0.62 + 5))
+                    
+
+                pygame.display.update()
+                
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        self.stop = 1
+                        self.start_running = False
+                        pygame.quit()
+                        sys.exit()
+                        
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if self.w * 0.6 <= mouse[0] <= self.w * 0.6 + 180 and self.h * 0.72 <= mouse[1] <= self.h * 0.72 + 50:
+                            self.stage = 2
+                            pygame.quit()
+
+                        elif self.w * 0.6 <= mouse[0] <= self.w * 0.6 + 180 and self.h * 0.82 <= mouse[1] <= self.h * 0.82 + 50:
+                            self.stage = 1
+                            pygame.quit()
+                            return
+
+                        elif 10 <= mouse[0] <= 50 and 10 <= mouse[1] <= 50 and self.sound_state == 1:
+                            self.sound_state = 0
+
+                        elif 10 <= mouse[0] <= 50 and 10 <= mouse[1] <= 50 and self.sound_state == 0:
+                            self.sound_state = 2
+
+                        elif self.w * 0.57 <= mouse[0] <= self.w * 0.57 + 300 and self.h * 0.62 <= mouse[1] <= self.h * 0.62 + 50:
+                            if self.joystick_connect() == 1:
+                                self.joystick = 1
+                                time.sleep(2)
+                                self.arduino.write(bytes("1", 'utf-8'))
+                                self.speed = 1.5
+                            else:
+                                self.joystick = 0
+                                pyautogui.alert("Джойстик не найден")
+                                self.speed = 1.5
         
 
 
