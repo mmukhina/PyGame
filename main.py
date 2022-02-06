@@ -20,6 +20,7 @@ class Dino(pygame.sprite.Sprite):
         self.index = 0
         self.get_killed = 0
         self.attack = 0
+        self.wall = 0
         self.direction = "dowm"
         self.image = self.dino_down[self.index]
  
@@ -74,18 +75,46 @@ class Dino(pygame.sprite.Sprite):
 
                 else:
                     if self.rect.x > x + 30:
-                        self.left(maps, x, y)
+                        self.left(maps)
+
+                        if self.wall == 1:
+                            if self.rect.y > y + 30:
+                                self.up(maps)
+                            else:
+                                self.down(maps)
 
 
                     elif self.rect.x < x - 30:
-                        self.right(maps, x, y)
+                        self.right(maps)
+
+                        if self.wall == 1:
+                            if self.rect.y > y + 30:
+                                self.up(maps)
+                            else:
+                                self.down(maps)
 
                     elif self.rect.y > y + 30:
-                        self.up(maps, x, y)
+                        self.up(maps)
+
+                        if self.wall == 1:
+                            if self.rect.x < x - 30:
+                                self.right(maps)
+                            else:
+                                self.left(maps)
 
 
                     elif self.rect.y < y - 30:
-                        self.down(maps, x, y)
+                        self.down(maps)
+
+                        if self.wall == 1:
+                            if self.rect.x < x - 30:
+                                self.right(maps)
+                            else:
+                                self.left(maps)
+                                
+
+                    self.wall = 0
+
                         
 
                     self.attack = 0
@@ -111,52 +140,41 @@ class Dino(pygame.sprite.Sprite):
             self.image = self.dino_down[0]
 
 
-    def left(self, maps, x, y):
+    def left(self, maps):
         self.rect = self.rect.move(-7, 0)
 
-        if pygame.sprite.collide_mask(self, maps):
+        if pygame.sprite.collide_mask(self, maps) and self.wall == 0:
             self.rect = self.rect.move(7, 0)
-
-            if self.rect.y < y - 30:
-                self.down(maps, x, y)
-            else:
-                self.up(maps, x, y)
+            self.wall = 1
 
         else:
             if self.index >= len(self.dino_left) * 5:
                 self.index = 0
             self.image = self.dino_left[self.index // 5]
             self.direction = "left"
+            self.wall = 0
 
 
-    def right(self, maps, x, y):
+    def right(self, maps):
         self.rect = self.rect.move(7, 0)
 
-        if pygame.sprite.collide_mask(self, maps):
+        if pygame.sprite.collide_mask(self, maps) and self.wall == 0:
             self.rect = self.rect.move(-7, 0)
-
-
-            if self.rect.y < y - 30:
-                self.down(maps, x, y)
-            else:
-                self.up(maps, x, y)
+            self.wall = 1
                 
         else:
             if self.index >= len(self.dino_right) * 5:
                 self.index = 0
             self.image = self.dino_right[self.index // 5]
             self.direction = "right"
+            self.wall = 0
 
-    def up(self, maps, x, y):
+    def up(self, maps):
         self.rect = self.rect.move(0, -7)
 
-        if pygame.sprite.collide_mask(self, maps):
+        if pygame.sprite.collide_mask(self, maps) and self.wall == 0:
             self.rect = self.rect.move(0, 7)
-
-            if self.rect.x > x + 30:
-                self.left(maps, x, y)
-            else:
-                self.right(maps, x, y)
+            self.wall = 1
                 
             
         else:
@@ -164,23 +182,21 @@ class Dino(pygame.sprite.Sprite):
                 self.index = 0
             self.image = self.dino_up[self.index // 5]
             self.direction = "up"
+            self.wall = 0
 
-    def down(self, maps, x, y):
+    def down(self, maps):
         self.rect = self.rect.move(0, 7)
 
-        if pygame.sprite.collide_mask(self, maps):
+        if pygame.sprite.collide_mask(self, maps)and self.wall == 0:
             self.rect = self.rect.move(0, -7)
-
-            if self.rect.x > x + 30:
-                self.left(maps, x, y)
-            else:
-                self.right(maps, x, y)
+            self.wall = 1
 
         else:
             if self.index >= len(self.dino_down) * 5:
                 self.index = 0
             self.image = self.dino_down[self.index // 5]
             self.direction = "down"
+            self.wall = 0
         
         
 
@@ -205,13 +221,13 @@ class Shooting_bullet(pygame.sprite.Sprite):
     def update(self, move, speed):
         
         if self.direction in ["down", "down stop"]:
-            self.rect = self.rect.move(0, 12)
+            self.rect = self.rect.move(0, 20)
         elif self.direction in ["up", "up stop"]:
-            self.rect = self.rect.move(0, -12)
+            self.rect = self.rect.move(0, -20)
         elif self.direction in ["left", "left stop"]:
-            self.rect = self.rect.move(-12, 0)
+            self.rect = self.rect.move(-20, 0)
         elif self.direction in ["right", "right stop"]:
-            self.rect = self.rect.move(12, 0)
+            self.rect = self.rect.move(20, 0)
 
         if move == "down":
             self.rect = self.rect.move(0, - speed)
@@ -224,7 +240,7 @@ class Shooting_bullet(pygame.sprite.Sprite):
 
         self.count += 1
 
-        if self.count == 30:
+        if self.count == 20:
             self.kill()
          
 
@@ -494,9 +510,11 @@ class Game():
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.mixer.pre_init(44100, -16, 1, 512)
         self.clock = pygame.time.Clock()
+        self.growl_count = 0
                     
         while self.main_game_running:
             if self.health != 0:
+                self.past_shot += 1
                 if self.joystick != 1:
                     for event in pygame.event.get():
                         if event.type == QUIT:
@@ -514,11 +532,14 @@ class Game():
                                 self.pick = 1
 
                             if event.key == pygame.K_LSHIFT :
-                                self.speed = 12
+                                self.speed = 15
 
-                            if event.key == pygame.K_SPACE and self.no_bullet > 0:
+                            if event.key == pygame.K_SPACE and self.no_bullet > 0 and self.past_shot > 50:
                                 self.no_bullet -= 1
                                 Shooting_bullet((self.width // 2), (self.height // 2), self.direction,  self.shooting_bullet_group)
+                                if self.sound_state == 1:
+                                    self.shot_sound.play()
+                                self.past_shot = 0
 
                             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                                 self.direction = "down"
@@ -567,7 +588,9 @@ class Game():
                     elif self.joy_move in [b'1U\n', b'2U\n', b'3U\n', b'4U\n', b'5U\n']:
                         self.direction = "up"
 
-                    if self.joy_move == [b'1N\n', b'2N\n', b'3N\n', b'4N\n', b'5N\n']:
+                    
+
+                    if self.joy_move in [b'1N\n', b'2N\n', b'3N\n', b'4N\n', b'5N\n']:
                         if self.direction == "down":
                             self.direction = "down stop"
                         elif self.direction == "up":
@@ -583,13 +606,17 @@ class Game():
                         self.pick  = 0
 
                     if self.joy_move in [b'3D\n', b'3U\n', b'3L\n', b'3R\n', b'3N\n']:
-                        self.speed = 12
+                        self.speed = 15
                     else:
                         self.speed  = 6
 
-                    if self.joy_move in [b'4D\n', b'4U\n', b'4L\n', b'4R\n', b'4N\n'] and self.no_bullet > 0:
+                    if self.joy_move in [b'4D\n', b'4U\n', b'4L\n', b'4R\n', b'4N\n'] and self.no_bullet > 0 and self.past_shot > 50:
                         self.no_bullet -= 1
                         Shooting_bullet((self.width // 2), (self.height // 2), self.direction,  self.shooting_bullet_group)
+                        if self.sound_state == 1:
+                            self.shot_sound.play()
+                        self.past_shot = 0
+
 
                     self.update()
 
@@ -612,11 +639,11 @@ class Game():
                 
 
     def update(self):
-        if self.speed == 12 and self.stamina > 0:
+        if self.speed == 15 and self.stamina > 0:
             self.stamina -= 1
         elif self.speed == 6 and self.stamina != 255:
             self.stamina += 1
-        if self.speed == 12 and self.stamina < 20:
+        if self.speed == 15 and self.stamina < 20:
             self.speed = 6
             
         self.text_update()
@@ -647,11 +674,37 @@ class Game():
                 
 
         life = pygame.sprite.groupcollide(self.player_group, self.dino_group, False, False)
+        
+            
         if life != {}:
             self.hit_count += 1
+            if self.sound_state == 1 and self.claw_count > 100:
+                self.claws_sound.play()
+                self.claw_count = 0
+        else:
+            self.claws_sound.stop()
+
+        self.claw_count += 1
+            
         if self.hit_count == 100:
             self.health -= 1
             self.hit_count = 0
+
+
+        if self.growl_count > self.growl_random and self.sound_state == 1:
+            temp = random.randint(0, 2)
+            self.growl_sound[temp].play()
+            self.growl_random = random.randint(150, 400)
+            self.growl_count = 0
+
+        self.growl_count += 1
+   
+        if self.sound_state == 1 and self.direction in ["down", "left", "right", "up"] and self.footsteps_count == 0:
+            self.footsteps_sound.play(-1)
+            self.footsteps_count = 1
+        elif self.direction not in ["down", "left", "right", "up"]:
+            self.footsteps_count = 0
+            self.footsteps_sound.stop()
 
         self.dino_group.draw(self.screen)
         self.dino_group.update(self.direction, self.width // 2 - 60, self.height // 2 - 60, self.health, self.speed,
@@ -662,8 +715,10 @@ class Game():
             self.player_group.update(self.health, self.direction, self.speed)
             pygame.display.update()
         else:
+            self.claws_sound.stop()
+            self.footsteps_sound.stop()
             for i in range(80):
-                self.text()
+                self.text_update()
                 self.dino_group.draw(self.screen)
                 self.dino_group.update(self.direction, self.width // 2 - 60, self.height // 2 - 60, self.health, self.speed,
                                            self.shooting_bullet_group, self.player_group, self.maps, self.mask_group)
@@ -756,6 +811,11 @@ class Game():
         self.counter = 0
         self.speed = 6
         self.stamina = 255
+        self.past_shot = 50
+        self.claw_count = 0
+        self.growl_random = random.randint(150, 400)
+        self.growl_count = 0
+        self.footsteps_count = 0
 
         # Sprite группы
         self.player_group = pygame.sprite.Group()
@@ -813,11 +873,17 @@ class Game():
 
         result = cur.execute("""SELECT * FROM Lists WHERE key is "dino_left_kill" """).fetchall()
         self.dino_left_kill = [pygame.image.load(i) for i in result[0][1:] if i != "no"]
-        
 
+        result = cur.execute("""SELECT * FROM Lists WHERE key is "growl" """).fetchall()
+        self.growl_sound = [pygame.mixer.Sound(i) for i in result[0][1:] if i != "no"]
 
         con.close()
+        
+        self.footsteps_sound = pygame.mixer.Sound("Sound/footsteps.mp3")
+        self.shot_sound = pygame.mixer.Sound("Sound/shot.mp3")
+        self.claws_sound = pygame.mixer.Sound("Sound/claws.wav")
 
+        
         
                 
 
