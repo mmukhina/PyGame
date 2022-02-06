@@ -1,26 +1,28 @@
 <h1 align="center">Last Monday</h1>
 
-
-<img align="right" width="350" src="https://user-images.githubusercontent.com/73754515/152642626-4a92fce6-aea9-4a7f-b6c7-8196dea162ee.jpg">
+<img align="right" width="350" src="https://user-images.githubusercontent.com/73754515/152667986-33ffab49-0565-43f2-aae3-54c6c02dcefd.JPG">
 
 Цель проекта создать игру, в которой главная задача в выживании, собирать пули и отбиваться от монстров. А также создать джойстик, при помощи которого можно будет управлять героем.
 
-Посмотреть видео
+[Посмотреть видео](https://www.youtube.com/watch?v=4YHRfJ9JOrU)
 
-<img src="https://user-images.githubusercontent.com/73754515/152643825-e5d84410-59ee-43e3-bae3-12b09c15a7a3.gif">
-
-
+<br><br><br><br>
 
 ## Использованные технологии
+
+
 
 - Pygame
 - Pygame mixer
 - Pyautogui
-- sys
+- Sys
 - Time
 - Random
 - Serial
 - Sqlite3
+
+<img src="https://user-images.githubusercontent.com/73754515/152678072-1e0c3b4c-2aba-4f20-a53b-fcd4dd0d7b5f.png">
+
 
 ## Подключение
 
