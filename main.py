@@ -571,7 +571,7 @@ class Game():
                             if event.key == pygame.K_LSHIFT:
                                 self.speed = 15
                             # Ограничение на частоту стрельбы
-                            if self.past_shot > 50 and self.no_bullet > 0:
+                            if self.past_shot > 35 and self.no_bullet > 0:
                                 if event.key == pygame.K_SPACE:
                                     self.no_bullet -= 1
                                     # Создаем пулю
@@ -713,7 +713,7 @@ class Game():
         if self.speed == 15 and self.stamina > 0:
             self.stamina -= 1
         elif self.speed == 6 and self.stamina != 255:
-            self.stamina += 1
+            self.stamina += 0.5
         if self.speed == 15 and self.stamina < 20:
             self.speed = 6
 
@@ -906,7 +906,7 @@ class Game():
         self.joy_move = b''
         self.direction = "down_stop"
         self.health = 5
-        self.no_bullet = 0
+        self.no_bullet = 100
         self.no_killed = 0
         self.pick = 0
         self.shoot = 0
@@ -1018,7 +1018,7 @@ class Game():
 
         # Загружаем звуки
         self.footsteps_sound = pygame.mixer.Sound("Sound/footsteps.mp3")
-        self.shot_sound = pygame.mixer.Sound("Sound/shot.mp3")
+        self.shot_sound = pygame.mixer.Sound("Sound/shot2.mp3")
         self.claws_sound = pygame.mixer.Sound("Sound/claws.wav")
 
     def pause(self):
@@ -1036,6 +1036,10 @@ class Game():
             """SELECT * FROM Lists WHERE key is "pause_window" """).fetchall()
         self.pause_window = [
             pygame.image.load(i) for i in result[0][1:] if i != "no"]
+
+        result = cur.execute(
+            """SELECT * FROM Lists WHERE key is "best_score" """).fetchall()
+        self.best_score = int(result[0][1])
 
         con.close()
 
@@ -1061,6 +1065,8 @@ class Game():
             'Счет: ' + str(self.no_killed), True, (255, 255, 255))
         text7 = font1.render(
             'Нажмите, чтобы продолжить', True, (255, 255, 255))
+        text8 = font1.render(
+            "Лучший: " + str(self.best_score), True, (255, 255, 255))
 
         pygame.display.update()
 
@@ -1077,11 +1083,28 @@ class Game():
         while self.start_running:
             # Если здоровья нет показать заставку конец игры
             if self.health == 0:
+                # Проверяем если счет больше лучшего и обновляем
+                if self.no_killed > self.best_score:
+                    con = sqlite3.connect("database.db")
+                    cur = con.cursor()
+                    update = ("""Update Lists set '1' = ?
+                        WHERE key = 'best_score' """)
+                    cur.execute(update, (str(self.no_killed),))
+                    con.commit()
+                    con.close()
+
+                    text8 = font1.render(
+                        "Лучший: " + str(self.no_killed), True,
+                        (255, 255, 255))
+
                 self.screen_start.blit(self.end_game, [0, 0])
 
                 self.screen_start.blit(text6, (self.w * 0.57 + 115,
-                                               self.h * 0.82 + 5))
+                                               self.h * 0.82 - 20))
                 self.screen_start.blit(text7, (self.w * 0.1, self.h * 0.6))
+
+                self.screen_start.blit(text8, (self.w * 0.57 + 115,
+                                               self.h * 0.82 + 25))
 
                 for event in pygame.event.get():
                     if event.type == QUIT:
