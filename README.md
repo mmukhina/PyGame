@@ -21,8 +21,7 @@
 - Serial
 - Sqlite3
 
-<img src="https://user-images.githubusercontent.com/73754515/152678072-1e0c3b4c-2aba-4f20-a53b-fcd4dd0d7b5f.png">
-
+<img src="https://user-images.githubusercontent.com/73754515/152894103-db95e2a8-16de-460d-8417-2997af78a730.png">
 
 ## Подключение
 
