@@ -906,7 +906,7 @@ class Game():
         self.joy_move = b''
         self.direction = "down_stop"
         self.health = 5
-        self.no_bullet = 100
+        self.no_bullet = 0
         self.no_killed = 0
         self.pick = 0
         self.shoot = 0
